@@ -1,8 +1,8 @@
-import { View, TouchableOpacity, Text } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import colors from 'tailwindcss/colors';
+import { View, TouchableOpacity, Text } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import colors from "tailwindcss/colors";
 
-import Logo from '../assets/logo.svg';
+import Logo from "../assets/logo.svg";
 
 export function Header(){
   return (

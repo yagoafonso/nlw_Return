@@ -1,3 +1,4 @@
+import { generateDatesFromYearBeginning } from "../utils/generate-range-from-year-beginning";
 import { HabitDay } from "./HabitDay";
 
 const weekDays = [
@@ -9,6 +10,9 @@ const weekDays = [
   'S',
   'S',
 ]
+
+const summaryDates =generateDatesFromYearBeginning()
+
 export function Summarytable() {
   return (
     <div className="w-full flex">
@@ -25,15 +29,9 @@ export function Summarytable() {
         })}
       </div>
       <div className="grid grid-rows-7 grid-flow-col gap-3">
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
-        <HabitDay />
+        {summaryDates.map(date => {
+          return <HabitDay key={date.toString()} />
+        })}
       </div>      
     </div>
   );

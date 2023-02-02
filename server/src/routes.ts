@@ -35,7 +35,7 @@ export async function appRoutes(app: FastifyInstance){
   // ROTA PARA RETORNAR DETALHE DO DIA
   app.get('/day', async (request) =>{
     const getDayParams = z.object({
-      date: z.coerce.date(),
+      date: z.coerce.date()
     })
 
 
@@ -46,7 +46,6 @@ export async function appRoutes(app: FastifyInstance){
 
     // PEGAR TODOS OS HÁBITOS PÓSSIVEIS
     // HÁBITOS QUE JÁ FORAM COMPLETADOS
-
     const possibleHabits = await prisma.habit.findMany({
       where: {
         created_at: {
@@ -57,10 +56,10 @@ export async function appRoutes(app: FastifyInstance){
             week_day: weekDay,
           }
         }
-      },
+      }
     })
 
-    const day = await prisma.day.findFirst({
+    const day = await prisma.day.findUnique({
       where: {
         date: parsedDate.toDate(),
       },
@@ -80,10 +79,10 @@ export async function appRoutes(app: FastifyInstance){
   })
 
   // ROTA PARA MARCAR UM HÁBITO COMO CONCLUÍDO/ NÃO CONCLUÍDO
-  app.patch('/habits/:id/toggle', async (request) =>{
+  app.patch('/habits/:id/toggle', async (request) => {
     //ROUTE PARAM => PARAMETRO DE IDENTIFICAÇÃO
     
-    const toggleHabitParams =z.object({
+    const toggleHabitParams = z.object({
       id: z.string().uuid(),
     })
 
@@ -107,7 +106,7 @@ export async function appRoutes(app: FastifyInstance){
 
     const dayHabit = await prisma.dayHabit.findUnique({
       where: {
-        day_id_habit_id: {
+        day_id_habit_id:{
           day_id: day.id,
           habit_id: id,
         }
@@ -115,12 +114,14 @@ export async function appRoutes(app: FastifyInstance){
     })
 
     if(dayHabit) {
+      //REMOVER A MARCAÇÃO DE COMPLETO
       await prisma.dayHabit.delete({
         where: {
           id: dayHabit.id,
         }
       })
     } else {
+      //COMPLETAR O HÁBITO
       await prisma.dayHabit.create({
         data: {
           day_id: day.id,
@@ -128,7 +129,32 @@ export async function appRoutes(app: FastifyInstance){
         }
       })
     }
+  })
 
+  // ROTA DE RESUMO DE DIA
+  app.get('/summary', async () => {
+    const summary = await prisma.$queryRaw`
+      SELECT 
+        D.id, 
+        D.date,
+        (
+          SELECT 
+            cast(count (*) as float)
+          FROM day_Habits DH
+          WHERE DH.day_id = D.id
+        ) as completed,
+        (
+          SELECT cast(count (*) as float)
+          FROM habit_week_days HWD
+          JOIN habits H
+            ON H.id = HWD.habit_id
+          WHERE
+            HWD.week_day = cast(strftime('%w', D.date/1000.0, 'unixepoch') as int)
+            AND H.created_at <= D.date
+        ) as amount      
+      FROM days D
+    `
 
+    return summary
   })
 }
